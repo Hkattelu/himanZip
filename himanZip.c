@@ -51,7 +51,7 @@ int main(int argc, char** argv){
 	/* Process the file to obtain an encoding list */
 
 	char buff = '\0';
-	struct huffman_char* encoding;
+	struct huffman_list* encoding;
 
 	//Read through the file and obtain frequences of each character
 	while(read(fd,&buff,1) > 0){
@@ -59,15 +59,15 @@ int main(int argc, char** argv){
 		if((encoding = checkEncodingList(buff)) == NULL){
 
 			//If the character does not exist in the list, append it to the start of the list
-			struct huffman_char* newEncoding = malloc(sizeof(struct huffman_char));
-			strcpy(&newEncoding->character,&buff);
-			newEncoding->frequency = 1;
+			struct huffman_list* newEncoding = malloc(sizeof(struct huffman_list));
+			strcpy(&(newEncoding->huff.character),&buff);
+			newEncoding->huff.frequency = 1;
 			newEncoding->next = encoding_list;
 			encoding_list = newEncoding;			
 
 		} else {
 			//If it does exist, simply increment the frequency
-			encoding->frequency++;
+			encoding->huff.frequency++;
 		}
 
 	}
@@ -80,13 +80,13 @@ int main(int argc, char** argv){
 	return 0;
 }
 
-struct huffman_char* checkEncodingList(char c){
+struct huffman_list* checkEncodingList(char c){
 
-	struct huffman_char* temp = encoding_list;
+	struct huffman_list* temp = encoding_list;
 
 	//Loop through the list to find the character
 	while(temp != NULL){
-		if(c == temp->character) return temp;
+		if(c == temp->huff.character) return temp;
 		temp = temp->next;
 	}
 
@@ -98,7 +98,7 @@ void freeEncodingList(){
 
 	if(encoding_list == NULL) return; //Nothing to free
 
-	struct huffman_char* temp = encoding_list;
+	struct huffman_list* temp = encoding_list;
 
 	//Loop through the list, freeing each node
 	while(encoding_list != NULL){
@@ -111,17 +111,19 @@ void freeEncodingList(){
 
 void printEncodingList(){
 
-	struct huffman_char* temp = encoding_list;
+	struct huffman_list* temp = encoding_list;
 
 	//Loop through the list to find the character
 	while(temp != NULL){
-		printf("Char: %c , Freq: %d\n",temp->character,temp->frequency);
+		printf("Char: %c , Freq: %d\n",temp->huff.character,temp->huff.frequency);
 		temp = temp->next;
 	}
 
 }
 
 struct treenode* generateHuffmanTree(){
+
+	
 
 	return NULL;
 

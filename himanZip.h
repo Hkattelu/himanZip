@@ -2,6 +2,7 @@
 #include <string.h>
 #include <fcntl.h>
 
+//Usage statement
 #define USAGE(name) do{									\
 	printf(										\
 		"%s [-hv] FILE \n"	\
@@ -15,20 +16,27 @@
 //Seems like a good arbitary limit
 #define MAX_ENCODING_SIZE 50
 
+//Structure used to create a huffman tree
 struct treenode{
 	char data;
 	struct treenode* left;
 	struct treenode* right;
 };
 
+//Structure used to map characters to frequencies
 struct huffman_char{
 	char character;
 	int frequency;
-	struct huffman_char* next;
-} ;
+};
+
+//Structure used to create a linkedlist of huffman chars
+struct huffman_list{
+	struct huffman_char huff;
+	struct huffman_list* next;
+};
 
 //List of characters and frequencies
-struct huffman_char* encoding_list = NULL;
+struct huffman_list* encoding_list = NULL;
 
 //Huffman tree used to encode characters
 struct treenode* huffman_tree = NULL;
@@ -38,7 +46,7 @@ Check if character c exists in our encoding list.
 @param c The character to check
 @return If it exists, return a pointer to the struct containing the character. Otherwise, NULL
 */
-struct huffman_char* checkEncodingList(char c);
+struct huffman_list* checkEncodingList(char c);
 
 /*
 Free's the memory malloc'd for the encoding list.
