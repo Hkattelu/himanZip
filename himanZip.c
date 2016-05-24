@@ -3,11 +3,11 @@
 
 int main(int argc, char** argv){
 
-	//Parse inputs
-	int i;
-	/*int verbose = 0;
-	char* output = NULL;
-	char* file = NULL; */
+	/*Parse inputs*/
+
+	//int verbose = 0;
+	char* file = NULL; 
+
 	int parseCount = 2;
 
 	if(argc < parseCount) {
@@ -15,26 +15,19 @@ int main(int argc, char** argv){
 		exit(EXIT_FAILURE);
 	}
 
+	int i;
 	for(i = 0; i < argc-1; i++){
 
+		//-h flag prints help statement
 		if(strcmp(argv[i],"-h") == 0){
 			USAGE(argv[0]);
 			exit(EXIT_SUCCESS);
-		}  //-h flag prints help statement
+		}  
 
+		//-v enables verbose output
 		if(strcmp(argv[i],"-v") == 0){
-			//verbose = 1; // Enables verbose output
+			//verbose = 1;
 			parseCount++;
-		}
-
-		if(strcmp(argv[i],"-o") == 0){
-			if(i+1 >= argc-1){
-				USAGE(argv[0]);
-				exit(EXIT_FAILURE);
-			}
-
-			//output = argv[i+1];
-			parseCount += 2;
 		}
 
 	}
@@ -44,7 +37,77 @@ int main(int argc, char** argv){
 		exit(EXIT_FAILURE);
 	}
 
-	//file = argv[argc-1];
+
+	/* Open File */
+
+	file = argv[argc-1];
+	int fd;
+	if((fd = open(file,O_RDWR)) < 1){
+		fprintf(stderr,"Failed to open file");
+		exit(EXIT_FAILURE);
+	}
+
+
+	/* Process the file to obtain an encoding list */
+
+	char buff = 'x';
+	struct huffman_char* encoding;
+
+	//Read through the file and obtain frequences of each character
+	while(read(fd,&buff,1) > -1){
+
+		if((encoding = checkEncodingList(buff)) == NULL){
+
+			//If the character does not exist in the list, append it to the start of the list
+			struct huffman_char* newEncoding = malloc(sizeof(struct huffman_char));
+			newEncoding->character = buff;
+			newEncoding->frequency = 1;
+			newEncoding->next = encoding_list;
+			encoding_list = newEncoding;			
+
+		} else {
+			//If it does exist, simply increment the frequency
+			encoding->frequency++;
+		}
+
+	}
+
+	/* Generate the huffman encodings of each character */
+
+
 
 	return 0;
+}
+
+struct huffman_char* checkEncodingList(char c){
+
+	struct huffman_char* temp = encoding_list;
+
+	//Loop through the list to find the character
+	while(temp != NULL){
+		if(strcmp(&c,&(temp->character)) == 0) return temp;
+		temp = temp->next;
+	}
+
+	return NULL; //The character is not in the list
+
+}
+
+void freeEncodingList(){
+
+	if(encoding_list == NULL) return; //Nothing to free
+
+	struct huffman_char* temp = encoding_list;
+
+	//Loop through the list, freeing each node
+	while(encoding_list != NULL){
+		temp = encoding_list;
+		encoding_list = encoding_list->next;
+		free(temp);
+	}
+
+}
+
+struct treenode* generateHuffmanTree(){
+	return NULL;
 }
