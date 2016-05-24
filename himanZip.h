@@ -46,6 +46,11 @@ Free's the memory malloc'd for the encoding list.
 void freeEncodingList();
 
 /*
+Prints the contents of the encoding list.
+*/
+void printEncodingList();
+
+/*
 Generates the huffman tree for the existing encoding list.
 @return Pointer to the root of the huffman tree. NULL upon error
 */

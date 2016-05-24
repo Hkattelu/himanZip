@@ -1,7 +1,7 @@
 all: himanZip
 
 himanZip:
-	gcc -Wall -Werror himanZip.c -o himanZip
+	gcc -g -Wall -Werror himanZip.c -o himanZip
 
 clean:
 	rm -f *~ *.o himanZip

@@ -42,7 +42,7 @@ int main(int argc, char** argv){
 
 	file = argv[argc-1];
 	int fd;
-	if((fd = open(file,O_RDWR)) < 1){
+	if((fd = open(file,O_RDONLY)) < 1){
 		fprintf(stderr,"Failed to open file");
 		exit(EXIT_FAILURE);
 	}
@@ -50,17 +50,17 @@ int main(int argc, char** argv){
 
 	/* Process the file to obtain an encoding list */
 
-	char buff = 'x';
+	char buff = '\0';
 	struct huffman_char* encoding;
 
 	//Read through the file and obtain frequences of each character
-	while(read(fd,&buff,1) > -1){
+	while(read(fd,&buff,1) > 0){
 
 		if((encoding = checkEncodingList(buff)) == NULL){
 
 			//If the character does not exist in the list, append it to the start of the list
 			struct huffman_char* newEncoding = malloc(sizeof(struct huffman_char));
-			newEncoding->character = buff;
+			strcpy(&newEncoding->character,&buff);
 			newEncoding->frequency = 1;
 			newEncoding->next = encoding_list;
 			encoding_list = newEncoding;			
@@ -74,7 +74,8 @@ int main(int argc, char** argv){
 
 	/* Generate the huffman encodings of each character */
 
-
+	printEncodingList();
+	freeEncodingList();
 
 	return 0;
 }
@@ -85,7 +86,7 @@ struct huffman_char* checkEncodingList(char c){
 
 	//Loop through the list to find the character
 	while(temp != NULL){
-		if(strcmp(&c,&(temp->character)) == 0) return temp;
+		if(c == temp->character) return temp;
 		temp = temp->next;
 	}
 
@@ -108,6 +109,20 @@ void freeEncodingList(){
 
 }
 
+void printEncodingList(){
+
+	struct huffman_char* temp = encoding_list;
+
+	//Loop through the list to find the character
+	while(temp != NULL){
+		printf("Char: %c , Freq: %d\n",temp->character,temp->frequency);
+		temp = temp->next;
+	}
+
+}
+
 struct treenode* generateHuffmanTree(){
+
 	return NULL;
+
 }
