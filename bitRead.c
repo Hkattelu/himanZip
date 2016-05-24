@@ -21,7 +21,3 @@ int bitRead(int fd, int bitNum, void* buffer){
 	return 0;
 
 }
-
-int main(int argc, char** argv){
-	return 0;
-}

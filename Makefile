@@ -1,7 +1,7 @@
-all: bitIO
+all: himanZip
 
-bitIO:
-	gcc -Wall -Werror bitIO.c -o bitIO
+himanZip:
+	gcc -Wall -Werror himanZip.c -o himanZip
 
 clean:
-	rm -f *~ *.o bitIO
+	rm -f *~ *.o himanZip
