@@ -1,5 +1,6 @@
 #include "himanZip.h"
 #include "bitRead.c"
+#include "prioQueue.c"
 
 int main(int argc, char** argv){
 
@@ -75,7 +76,28 @@ int main(int argc, char** argv){
 	/* Generate the huffman encodings of each character */
 
 	printEncodingList();
+	
+	struct huffman_list* temp = encoding_list;
+	struct prioQueue* pQueue = createQueue();
+
+	//Loop through the list, Insert each element into a priority queue
+	while(temp != NULL){
+		insertQueue(temp->huff,pQueue);
+		temp = temp->next;
+	}
+
 	freeEncodingList();
+
+	printf("===================\n");
+
+	struct huffman_char* tempo;
+
+	//Loop through the list to find the character
+	while((tempo = removeQueue(pQueue)) != NULL){
+		printf("Char: %c , Freq: %d\n",tempo->character,tempo->frequency);
+	}
+
+	deleteQueue(pQueue);
 
 	return 0;
 }
