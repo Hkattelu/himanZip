@@ -48,7 +48,6 @@ int main(int argc, char** argv){
 		exit(EXIT_FAILURE);
 	}
 
-
 	/* Process the file to obtain an encoding list */
 
 	char buff = '\0';
@@ -73,10 +72,8 @@ int main(int argc, char** argv){
 
 	}
 
-	/* Generate the huffman encodings of each character */
+	/* Generate the huffman tree */
 
-	printEncodingList();
-	
 	struct huffman_list* temp = encoding_list;
 	struct prioQueue* pQueue = createQueue();
 
@@ -86,17 +83,35 @@ int main(int argc, char** argv){
 		temp = temp->next;
 	}
 
-	freeEncodingList();
+	//Generate the huffman tree
+	struct huffman_char* leftnode;
+	struct huffman_char* rightnode;
 
-	printf("===================\n");
+	while(queueSize(pQueue) > 1){
 
-	struct huffman_char* tempo;
+		leftnode = removeQueue(pQueue);
+		rightnode = removeQueue(pQueue);
 
-	//Loop through the list to find the character
-	while((tempo = removeQueue(pQueue)) != NULL){
-		printf("Char: %c , Freq: %d\n",tempo->character,tempo->frequency);
+		struct huffman_list* newNode = malloc(sizeof(struct huffman_list));
+		strcpy(&(newNode->huff.character),"*");
+		newNode->huff.frequency = leftnode->frequency + rightnode->frequency;
+		newNode->next = encoding_list;
+		encoding_list = newNode;
+
+		newNode->huff.left = leftnode;
+		newNode->huff.right = rightnode;
+
+		insertQueue(newNode->huff,pQueue);
+
 	}
 
+	//Obtain the root of the huffman tree
+	huffman_tree = removeQueue(pQueue);
+
+	/* Encode the huffman tree to bits */
+
+
+	freeEncodingList();
 	deleteQueue(pQueue);
 
 	return 0;
@@ -144,8 +159,6 @@ void printEncodingList(){
 }
 
 struct treenode* generateHuffmanTree(){
-
-	
 
 	return NULL;
 

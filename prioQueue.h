@@ -32,6 +32,13 @@ Deletes a priority queue and free's its space from memory.
 */
 void deleteQueue(struct prioQueue* priorityQueue);
 
+/*
+Return the number of elements currently in a queue
+@param priorityQueue the queue to check
+@return the number of elements in the queue
+*/
+int queueSize(struct prioQueue* priorityQueue);
+
 
 
 

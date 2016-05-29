@@ -15,17 +15,12 @@
 //Seems like a good arbitary limit
 #define MAX_ENCODING_SIZE 50
 
-//Structure used to create a huffman tree
-struct treenode{
-	char data;
-	struct treenode* left;
-	struct treenode* right;
-};
-
-//Structure used to map characters to frequencies
+//Structure used to map characters to frequencies. Also used to create huffman tree
 struct huffman_char{
 	char character;
 	int frequency;
+	struct huffman_char* left;
+	struct huffman_char* right;
 };
 
 //Structure used to create a linkedlist of huffman chars
@@ -38,7 +33,7 @@ struct huffman_list{
 struct huffman_list* encoding_list = NULL;
 
 //Huffman tree used to encode characters
-struct treenode* huffman_tree = NULL;
+struct huffman_char* huffman_tree = NULL;
 
 /*
 Check if character c exists in our encoding list.

@@ -26,9 +26,11 @@ void insertQueue(struct huffman_char huffchar,struct prioQueue* priorityQueue){
 		while(huffchar.frequency < priorityQueue->huff_queue[index].frequency && index <= priorityQueue->rear) 
 			index++;
 
+		//Storage variables
 		int counter = index;
 		struct huffman_char tempchar = priorityQueue->huff_queue[counter];
 		struct huffman_char tempchar2 = priorityQueue->huff_queue[counter];
+
 		//Copy over the rest of the list, then insert the char
 		while(counter <= priorityQueue->rear){
 			counter++;
@@ -51,6 +53,7 @@ struct huffman_char* removeQueue(struct prioQueue* priorityQueue){
 
 	if(priorityQueue->front == -1 || priorityQueue->front > priorityQueue->rear) return NULL;
 	
+	//Grab the front element
 	priorityQueue->front++;
 	return &priorityQueue->huff_queue[priorityQueue->front-1];
 
@@ -61,4 +64,8 @@ void deleteQueue(struct prioQueue* priorityQueue){
 	memset(priorityQueue->huff_queue,0,QUEUE_MAX * sizeof(struct huffman_char) + 2*sizeof(int));
 	free(priorityQueue);
 
+}
+
+int queueSize(struct prioQueue* priorityQueue){
+	return priorityQueue->rear - priorityQueue->front + 1;
 }
