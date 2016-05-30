@@ -19,6 +19,7 @@
 struct huffman_char{
 	char character;
 	int frequency;
+	char* encoding;
 	struct huffman_char* left;
 	struct huffman_char* right;
 };
@@ -56,4 +57,12 @@ void printEncodingList();
 Generates the huffman tree for the existing encoding list.
 @return Pointer to the root of the huffman tree. NULL upon error
 */
-struct treenode* generateHuffmanTree();
+struct huffman_char* generateHuffmanTree();
+
+/*
+Assigns encodings to characters in the encoding list according
+to a specified huffman tree.
+@param hufftree The root of the specified huffman tree
+@param encoding The empty string
+*/
+void assignEncodings(struct huffman_char* hufftree, char* encoding);

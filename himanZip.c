@@ -62,6 +62,7 @@ int main(int argc, char** argv){
 			struct huffman_list* newEncoding = malloc(sizeof(struct huffman_list));
 			strcpy(&(newEncoding->huff.character),&buff);
 			newEncoding->huff.frequency = 1;
+			newEncoding->huff.encoding = NULL;
 			newEncoding->next = encoding_list;
 			encoding_list = newEncoding;			
 
@@ -74,45 +75,13 @@ int main(int argc, char** argv){
 
 	/* Generate the huffman tree */
 
-	struct huffman_list* temp = encoding_list;
-	struct prioQueue* pQueue = createQueue();
-
-	//Loop through the list, Insert each element into a priority queue
-	while(temp != NULL){
-		insertQueue(temp->huff,pQueue);
-		temp = temp->next;
-	}
-
-	//Generate the huffman tree
-	struct huffman_char* leftnode;
-	struct huffman_char* rightnode;
-
-	while(queueSize(pQueue) > 1){
-
-		leftnode = removeQueue(pQueue);
-		rightnode = removeQueue(pQueue);
-
-		struct huffman_list* newNode = malloc(sizeof(struct huffman_list));
-		strcpy(&(newNode->huff.character),"*");
-		newNode->huff.frequency = leftnode->frequency + rightnode->frequency;
-		newNode->next = encoding_list;
-		encoding_list = newNode;
-
-		newNode->huff.left = leftnode;
-		newNode->huff.right = rightnode;
-
-		insertQueue(newNode->huff,pQueue);
-
-	}
-
-	//Obtain the root of the huffman tree
-	huffman_tree = removeQueue(pQueue);
+	huffman_tree = generateHuffmanTree();
 
 	/* Encode the huffman tree to bits */
-
+	assignEncodings(huffman_tree,"");
 
 	freeEncodingList();
-	deleteQueue(pQueue);
+	close(fd);
 
 	return 0;
 }
@@ -141,6 +110,7 @@ void freeEncodingList(){
 	while(encoding_list != NULL){
 		temp = encoding_list;
 		encoding_list = encoding_list->next;
+		if(temp->huff.encoding != NULL) free(temp->huff.encoding);
 		free(temp);
 	}
 
@@ -158,8 +128,81 @@ void printEncodingList(){
 
 }
 
-struct treenode* generateHuffmanTree(){
+struct huffman_char* generateHuffmanTree(){
 
-	return NULL;
+	struct huffman_list* temp = encoding_list;
+	struct prioQueue* pQueue = createQueue();
+
+	//Loop through the list, Insert each element into a priority queue
+	while(temp != NULL){
+		insertQueue(temp->huff,pQueue);
+		temp = temp->next;
+	}
+
+	//Generate the huffman tree
+	struct huffman_char* leftnode;
+	struct huffman_char* rightnode;
+
+	while(queueSize(pQueue) > 1){
+
+		leftnode = removeQueue(pQueue);
+		rightnode = removeQueue(pQueue);
+
+		struct huffman_list* newNode = malloc(sizeof(struct huffman_list));
+		strcpy(&(newNode->huff.character),"*");
+		newNode->huff.frequency = leftnode->frequency + rightnode->frequency;
+		newNode->huff.encoding = NULL;
+		newNode->next = encoding_list;
+		encoding_list = newNode;
+
+		newNode->huff.left = leftnode;
+		newNode->huff.right = rightnode;
+
+		insertQueue(newNode->huff,pQueue);
+
+	}
+
+	//Obtain the root of the huffman tree
+	struct huffman_char* retVal = removeQueue(pQueue);
+	deleteQueue(pQueue);
+	return retVal;
+
+}
+
+void assignEncodings(struct huffman_char* hufftree, char* encoding){
+
+	//If we 've reached a leaf node, assign it
+	if(hufftree->left == NULL && hufftree->right == NULL){
+
+		//Find the leaf node character in the encoding list
+		struct huffman_list* temp = encoding_list;
+		while(temp != NULL){
+
+			if(&temp->huff == hufftree) break;
+			temp = temp->next;
+		}
+
+		if(temp == NULL) return; //The character did not exist in the encoding list
+
+		//If it exists in the list, copy over our existing encoding into it
+		hufftree->encoding = calloc(1,strlen(encoding) * sizeof(char));
+		strcpy(hufftree->encoding,encoding);
+		encoding[strlen(encoding) - 1] = '\0'; //Push back the current encoding by 1 character
+		return;
+	}
+
+	//Assign encoding for left subtree, 0 if you go left
+	if(hufftree->left != NULL){
+		strcat(encoding,"0");
+		assignEncodings(huffman_tree->left,encoding);
+	}
+
+	//Assign encoding for right subtree, 1 if you go right
+	if(hufftree->right != NULL){
+		strcat(encoding,"1");
+		assignEncodings(huffman_tree->right,encoding);
+	}
+
+	return;
 
 }
