@@ -79,9 +79,6 @@ int main(int argc, char** argv){
 	huffman_tree = generateHuffmanTree(pQueue);
 	struct prioQueue* prQueue = (struct prioQueue*) pQueue;
 
-	//printEncodingList();
-	//printf("Rt center: %p, left: %p, right: %p\n", (void*) huffman_tree,(void*) huffman_tree->left, (void*) huffman_tree->right);
-
 	/* Encode the huffman tree to bits */ 
 	char* huffencoding = calloc(1,MAX_ENCODING_SIZE * sizeof(char));
 	assignEncodings(huffman_tree,huffencoding);
@@ -143,7 +140,7 @@ struct huffman_char* generateHuffmanTree(void* Queue){
 
 	//Loop through the list, Insert each element into a priority queue
 	while(temp != NULL){
-		insertQueue(temp->huff,pQueue);
+		insertQueue(&temp->huff,pQueue);
 		temp = temp->next;
 	}
 
@@ -170,7 +167,7 @@ struct huffman_char* generateHuffmanTree(void* Queue){
 		newNode->huff.right = rightnode;
 
 		//Inset the new node into the queue
-		insertQueue(newNode->huff,pQueue);
+		insertQueue(&newNode->huff,pQueue);
 
 	}
 
@@ -195,7 +192,7 @@ void assignEncodings(struct huffman_char* hufftree, char* encoding){
 		if(temp == NULL) return; //The character did not exist in the encoding list
 
 		//If it exists in the list, copy over our existing encoding into it
-		hufftree->encoding = calloc(1,strlen(encoding) * sizeof(char));
+		hufftree->encoding = calloc(1,(strlen(encoding)+1) * sizeof(char));
 		strcpy(hufftree->encoding,encoding);
 		encoding[strlen(encoding) - 1] = '\0'; //Push back the current encoding by 1 character
 		return;
@@ -204,14 +201,13 @@ void assignEncodings(struct huffman_char* hufftree, char* encoding){
 	//Assign encoding for left subtree, 0 if you go left
 	if(hufftree->left != NULL){
 		strcat(encoding,"0");
-		assignEncodings(huffman_tree->left,encoding);
+		assignEncodings(hufftree->left,encoding);
 	}
 
 	//Assign encoding for right subtree, 1 if you go right
 	if(hufftree->right != NULL){
 		strcat(encoding,"1");
-		printf("right\n");
-		assignEncodings(huffman_tree->right,encoding);
+		assignEncodings(hufftree->right,encoding);
 	}
 
 	return;

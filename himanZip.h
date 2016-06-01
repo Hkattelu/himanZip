@@ -13,7 +13,7 @@
 	} while(0)
 
 //Seems like a good arbitary limit
-#define MAX_ENCODING_SIZE 100
+#define MAX_ENCODING_SIZE 300
 
 //Structure used to map characters to frequencies. Also used to create huffman tree
 struct huffman_char{

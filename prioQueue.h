@@ -2,7 +2,7 @@
 #define QUEUE_MAX 300
 
 struct prioQueue{
-	struct huffman_char huff_queue[QUEUE_MAX];
+	struct huffman_char* huff_queue[QUEUE_MAX];
 	int front;
 	int rear;
 };
@@ -18,7 +18,7 @@ Insert a specified huffman pairing into a priority queue.
 @param huffchar The pairing to insert
 @param priorityQueue The priority queue to insert the pairing into
 */
-void insertQueue(struct huffman_char huffchar,struct prioQueue* priorityQueue);
+void insertQueue(struct huffman_char* huffchar,struct prioQueue* priorityQueue);
 
 /*
 Pop an element off of a specified priority queue.
