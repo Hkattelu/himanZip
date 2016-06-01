@@ -1,5 +1,5 @@
 #include "himanZip.h"
-#include "bitRead.c"
+#include "bitIO.c"
 #include "prioQueue.c"
 
 int main(int argc, char** argv){
@@ -47,6 +47,12 @@ int main(int argc, char** argv){
 		exit(EXIT_FAILURE);
 	}
 
+	strcat(file,".hzip");
+	if(stat(file) > -1){
+		fprintf(stderr,"%s already exists, aborting compression.", file);
+		exit(EXIT_FAILURE);
+	}
+
 	/* Process the file to obtain an encoding list */
 
 	char buff = '\0';
@@ -79,11 +85,19 @@ int main(int argc, char** argv){
 	huffman_tree = generateHuffmanTree(pQueue);
 	struct prioQueue* prQueue = (struct prioQueue*) pQueue;
 
-	/* Encode the huffman tree to bits */ 
+	/* Obtain bit encodings from huffman tree */ 
 	char* huffencoding = calloc(1,MAX_ENCODING_SIZE * sizeof(char));
 	assignEncodings(huffman_tree,huffencoding);
 	free(huffencoding); 
 
+	/* Create Zip file */
+	int cfd = open(file, O_WRONLY | O_CREAT);
+	lseek(fd, 0, SEEK_SET);
+	char buf = '\0';
+
+	/* Begin writing encoding */
+
+	/* Free resources and close files */
 	freeEncodingList();
 	deleteQueue(prQueue);
 	close(fd);

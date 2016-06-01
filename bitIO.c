@@ -1,4 +1,4 @@
-#include "bitRead.h"
+#include "bitIO.h"
 
 int bitRead(int fd, int bitNum, void* buffer){
 
@@ -20,4 +20,8 @@ int bitRead(int fd, int bitNum, void* buffer){
 
 	return 0;
 
+}
+
+int bitWrite(int fd, char* bits){
+	return 0;
 }
