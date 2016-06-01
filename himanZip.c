@@ -48,24 +48,27 @@ int main(int argc, char** argv){
 	}
 
 	strcat(file,".hzip");
-	if(stat(file) > -1){
-		fprintf(stderr,"%s already exists, aborting compression.", file);
+	struct stat sb;
+  	memset(&sb,0,sizeof(sb));
+
+	if(stat(file,&sb) > -1){
+		fprintf(stderr,"%s already exists, aborting compression.\n", file);
 		exit(EXIT_FAILURE);
 	}
 
 	/* Process the file to obtain an encoding list */
 
-	char buff = '\0';
+	char* buff = calloc(1,sizeof(char));
 	struct huffman_list* encoding;
 
 	//Read through the file and obtain frequences of each character
-	while(read(fd,&buff,1) > 0){
+	while(read(fd,buff,1) > 0){
 
-		if((encoding = checkEncodingList(buff)) == NULL){
+		if((encoding = checkEncodingList(*buff)) == NULL){
 
 			//If the character does not exist in the list, append it to the start of the list
 			struct huffman_list* newEncoding = malloc(sizeof(struct huffman_list));
-			strcpy(&(newEncoding->huff.character),&buff);
+			strncpy(&(newEncoding->huff.character),buff,1);
 			newEncoding->huff.frequency = 1;
 			newEncoding->huff.encoding = NULL;
 			newEncoding->huff.left = NULL;
@@ -79,6 +82,7 @@ int main(int argc, char** argv){
 		}
 
 	}
+	free(buff);
 
 	/* Generate the huffman tree */
 	void* pQueue = (void *) createQueue(); //use a void pointer to avoid compiler errors
@@ -91,16 +95,33 @@ int main(int argc, char** argv){
 	free(huffencoding); 
 
 	/* Create Zip file */
-	int cfd = open(file, O_WRONLY | O_CREAT);
-	lseek(fd, 0, SEEK_SET);
-	char buf = '\0';
+	int cfd;
+	if((cfd = open(file,O_RDWR | O_CREAT)) < 0){
+		fprintf(stderr, "Failed to open file\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if(lseek(fd, 0, SEEK_SET) < 0){
+		fprintf(stderr,"Could not restore file with lseek.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	char* buf = calloc(1,sizeof(char));
+	char* toWrite = calloc(1,2000*sizeof(char));
 
 	/* Begin writing encoding */
+	while(read(fd,buf,1) > 0) 
+		strcat(toWrite,checkEncodingList(*buf)->huff.encoding);
+
+	printf("%d\n.",bitWrite(cfd,toWrite));
 
 	/* Free resources and close files */
+	free(buf);
+	free(toWrite);
 	freeEncodingList();
 	deleteQueue(prQueue);
 	close(fd);
+	close(cfd);
 
 	return 0;
 }
