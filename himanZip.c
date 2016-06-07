@@ -6,9 +6,10 @@ int main(int argc, char** argv){
 
 	/*Parse inputs*/
 
-	//int verbose = 0;
+	int opt;
+	int decompress = 0;
+	int verbose = 0;
 	char* file = NULL; 
-
 	int parseCount = 2;
 
 	if(argc < parseCount) {
@@ -16,27 +17,37 @@ int main(int argc, char** argv){
 		exit(EXIT_FAILURE);
 	}
 
-	int i;
-	for(i = 0; i < argc-1; i++){
-
-		//-h flag prints help statement
-		if(strcmp(argv[i],"-h") == 0){
-			USAGE(argv[0]);
-			exit(EXIT_SUCCESS);
-		}  
-
-		//-v enables verbose output
-		if(strcmp(argv[i],"-v") == 0){
-			//verbose = 1;
-			parseCount++;
+	while((opt = getopt(argc, argv, "hvd")) != -1){
+		switch(opt){
+			case 'h':
+				USAGE(argv[0]);
+				exit(EXIT_SUCCESS);
+				break;
+			case 'v':
+				verbose = 1;
+				parseCount++;
+				break; 
+			case 'd':
+				decompress = 1;
+				parseCount++;
+				break;
+			case '?':
+				//Invalid option
+			default:
+				//Not h c or v, check if there are 2 args
+				if(argc == 2) break; 
+				
+				//Invalid option provided
+				USAGE(argv[0]);
+				exit(EXIT_FAILURE);
+				break;
 		}
 	}
 
-	if(argc > parseCount){
-		USAGE(argv[0]);
-		exit(EXIT_FAILURE);
+	if(decompress > 0){
+		printf("Still have to do decompression.\n");
+		exit(EXIT_SUCCESS);
 	}
-
 
 	/* Open File */
 
@@ -94,6 +105,8 @@ int main(int argc, char** argv){
 	assignEncodings(huffman_tree,huffencoding);
 	free(huffencoding); 
 
+	if(verbose == 1) printEncodingList();
+
 	/* Create Zip file */
 	int cfd;
 	if((cfd = open(file,O_RDWR | O_CREAT)) < 0){
@@ -107,13 +120,17 @@ int main(int argc, char** argv){
 	}
 
 	char* buf = calloc(1,sizeof(char));
-	char* toWrite = calloc(1,2000*sizeof(char));
+	char* toWrite = calloc(1,10000*sizeof(char));
 
 	/* Begin writing encoding */
-	while(read(fd,buf,1) > 0) 
+	while(read(fd,buf,1) > 0){
+		if(strlen(toWrite) > (10000- MAX_ENCODING_SIZE) && strlen(toWrite) % 8 == 0){
+			bitWrite(cfd,toWrite);
+			memset(toWrite,0,2000*sizeof(char));
+		}
 		strcat(toWrite,checkEncodingList(*buf)->huff.encoding);
-
-	printf("%d\n.",bitWrite(cfd,toWrite));
+	}
+	bitWrite(cfd,toWrite);
 
 	/* Free resources and close files */
 	free(buf);

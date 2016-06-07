@@ -7,15 +7,16 @@
 #define USAGE(name) do{									\
 	printf(										\
 		"%s [-hv] FILE \n"	\
-		"-h 				Displays this help menu, and returns EXIT_SUCCESS.\n"  \
-		"-v 				Verbose print relevant compression information.\n"  \
-		"FILE 				This is the name of the file to compress (becomes FILE.hzip).\n"  \
+		"-h\tDisplays this help menu, and returns EXIT_SUCCESS.\n"  \
+		"-v\tVerbose print relevant compression information.\n"  \
+		"-d\tDecompress FILE. File must be of type .hzip\n"  \
+		"FILE\tThis is the name of the file to compress (becomes FILE.hzip).\n"  \
 		,(name)	\
 		); \
 	} while(0)
 
 //Seems like a good arbitary limit
-#define MAX_ENCODING_SIZE 300
+#define MAX_ENCODING_SIZE 500
 
 //Structure used to map characters to frequencies. Also used to create huffman tree
 struct huffman_char{
