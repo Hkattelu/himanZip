@@ -24,6 +24,9 @@ struct huffman_list* encoding_list = NULL;
 //Huffman tree used to encode characters
 struct huffman_char* huffman_tree = NULL;
 
+//Buffer used to convert characters to bit strings
+char* bitstringBuff = NULL;
+
 /*
 Check if character c exists in our encoding list.
 @param c The character to check
@@ -59,10 +62,9 @@ void assignEncodings(struct huffman_char* hufftree, char* encoding);
 /*
 Return the string representation of a huffman tree.
 @param hufftree Pointer to the root of the specified huffman tree
-@param returnString The empty string
-@return The string representation
+@param returnString Buffer to place the string into
 */
-char* huffmanTreeToString(struct huffman_char* hufftree, char* returnString);
+void huffmanTreeToString(struct huffman_char* hufftree, char* returnString);
 
 /*
 Return the bitstring representation of a character

@@ -108,6 +108,15 @@ int main(int argc, char** argv){
 	if(verbose == 1) printEncodingList();
 
 	/* Create Zip file */
+	char* buf = calloc(1,sizeof(char));
+	char* toWrite = calloc(1,10000*sizeof(char)); //Cap off at size 10,000 bits for now.
+	bitstringBuff = calloc(1,9 * sizeof(char));
+
+	/* Write the Huffman tree */
+	char* huffBuff = calloc(1,10000*sizeof(char));
+	huffmanTreeToString(huffman_tree,huffBuff);
+	int huffLen = strlen(huffBuff);
+
 	int cfd;
 	if((cfd = open(file,O_RDWR | O_CREAT)) < 0){
 		fprintf(stderr, "Failed to open file\n");
@@ -119,14 +128,17 @@ int main(int argc, char** argv){
 		exit(EXIT_FAILURE);
 	}
 
-	char* buf = calloc(1,sizeof(char));
-	char* toWrite = calloc(1,10000*sizeof(char)); //Cap off at size 10,000 bits for now.
+	bitWrite(cfd,charToBitString((char) huffLen >> 8)); //Max tree size of 2^16 for now
+	bitWrite(cfd,charToBitString((char) huffLen)); //First write tree length for decompression
+	bitWrite(cfd,huffBuff); //Now write tree itself
 
 	/* Begin writing encoding */
 	while(read(fd,buf,1) > 0) strcat(toWrite,checkEncodingList(*buf)->huff.encoding);
 	bitWrite(cfd,toWrite);
 
 	/* Free resources and close files */
+	free(bitstringBuff);
+	free(huffBuff);
 	free(buf);
 	free(toWrite);
 	freeEncodingList();
@@ -260,31 +272,31 @@ void assignEncodings(struct huffman_char* hufftree, char* encoding){
 
 }
 
-char* huffmanTreeToString(struct huffman_char* hufftree, char* returnString){
+void huffmanTreeToString(struct huffman_char* hufftree, char* returnString){
 
 	if(hufftree->left == NULL && hufftree->right == NULL){
 		strcat(returnString,"1");
-		return charToBitString(hufftree->character);
+		strcat(returnString,charToBitString(hufftree->character));
 	} else {
 		strcat(returnString,"0");
 	}
 
 	if(hufftree->left != NULL) {
-		strcat(returnString, huffmanTreeToString(hufftree->left,returnString));
+		huffmanTreeToString(hufftree->left,returnString);
 	}
 
 	if(hufftree->right != NULL) {
-		strcat(returnString, huffmanTreeToString(hufftree->right,returnString));
+		huffmanTreeToString(hufftree->right,returnString);
 	}
 
-	return returnString;
+	return;
 }
 
 char* charToBitString(char x){
-	char* toReturn = "";
 	int i;
-	for(i = 7; i > 0; i--){
-		strcat(toReturn, (x & (1 << x)) ? "1" : "0");
+	for(i = 7; i >= 0; i--){
+		if(x & (1 << i)) bitstringBuff[7-i] = '1';
+		else bitstringBuff[7-i] = '0';
 	}
-	return toReturn;
+	return bitstringBuff;
 }
