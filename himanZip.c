@@ -20,15 +20,15 @@ int main(int argc, char** argv){
 
 	while((opt = getopt(argc, argv, "hvd")) != -1){
 		switch(opt){
-			case 'h':
+			case 'h': //Help
 				USAGE(argv[0]);
 				exit(EXIT_SUCCESS);
 				break;
-			case 'v':
+			case 'v': //Verbose
 				verbose = 1;
 				parseCount++;
 				break; 
-			case 'd':
+			case 'd': //Decompress
 				decompress = 1;
 				parseCount++;
 				break;
@@ -46,6 +46,24 @@ int main(int argc, char** argv){
 	}
 
 	if(decompress > 0){
+
+		//Check if the file is of type .hzip
+		if((strstr(file,".hzip") == NULL){
+			fprintf(stderr,"File not of type .hzip, aborting.\n");
+			exit(EXIT_FAILURE);
+		}
+
+		file[strlen(file) - 5] = '\0';
+
+		//Check if the unzipped version of the file already exists
+		struct stat sb;
+	  	memset(&sb,0,sizeof(sb));
+
+		if(stat(file,&sb) > -1){
+			fprintf(stderr,"%s already exists, aborting compression.\n", file);
+			exit(EXIT_FAILURE);
+		}
+
 		printf("Still have to do decompression.\n");
 		exit(EXIT_SUCCESS);
 	}
@@ -55,10 +73,11 @@ int main(int argc, char** argv){
 	file = argv[argc-1];
 	int fd;
 	if((fd = open(file,O_RDONLY)) < 1){
-		fprintf(stderr,"Failed to open file");
+		fprintf(stderr,"Failed to open file.\n");
 		exit(EXIT_FAILURE);
 	}
 
+	//Check if the zipped version of the file already exists
 	strcat(file,".hzip");
 	struct stat sb;
   	memset(&sb,0,sizeof(sb));
@@ -110,7 +129,7 @@ int main(int argc, char** argv){
 	/* Create Zip file */
 	int cfd;
 	if((cfd = open(file,O_RDWR | O_CREAT)) < 0){
-		fprintf(stderr, "Failed to open file\n");
+		fprintf(stderr, "Failed to open file. \n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -183,9 +202,15 @@ void printEncodingList(){
 
 	struct huffman_list* temp = encoding_list;
 
-	//Loop through the list to find the character
+	//Loop through the list to print characters
 	while(temp != NULL){
-		printf("Char: %c, Frequency: %d, Encoding: %s\n",temp->huff.character,temp->huff.frequency,temp->huff.encoding);
+
+		if(temp->huff.character != '*'){
+			printf("Char: %c, Frequency: %d, Encoding: %s\n",
+				temp->huff.character,
+				temp->huff.frequency,
+				temp->huff.encoding);
+		}
 		temp = temp->next;
 	}
 
@@ -237,7 +262,7 @@ struct huffman_char* generateHuffmanTree(struct prioQueue* Queue){
 void assignEncodings(struct huffman_char* hufftree, char* encoding, int length){
 
 	//If we 've reached a leaf node, assign it
-	if(hufftree->character != '*'){
+	if(hufftree->left == NULL && hufftree->right == NULL){
 
 		//Find the leaf node character in the encoding list
 		struct huffman_list* temp = encoding_list;
@@ -276,26 +301,37 @@ void assignEncodings(struct huffman_char* hufftree, char* encoding, int length){
 void huffmanTreeToString(struct huffman_char* hufftree, char* returnString){
 
 	if(hufftree->left == NULL && hufftree->right == NULL){
+		//Leaf nodes are preceded by a "1"
 		strcat(returnString,"1");
 		strcat(returnString,charToBitString(hufftree->character));
 	} else {
+		//Non-leaves are preceded by a "0"
 		strcat(returnString,"0");
 	}
 
 	if(hufftree->left != NULL) {
-		huffmanTreeToString(hufftree->left,returnString);
+		huffmanTreeToString(hufftree->left,returnString); //Left subtree
 	}
 
 	if(hufftree->right != NULL) {
-		huffmanTreeToString(hufftree->right,returnString);
+		huffmanTreeToString(hufftree->right,returnString); //Right subtree
 	}
 
 	return;
 }
 
+struct huffman_char* stringToHuffmanTree(char* huffString){
+
+	return NULL;
+}
+
 char* charToBitString(char x){
 	int i;
+
+	//Grab each bit
 	for(i = 7; i >= 0; i--){
+
+		//Will evalute to true if the bit is 1
 		if(x & (1 << i)) bitstringBuff[7-i] = '1';
 		else bitstringBuff[7-i] = '0';
 	}

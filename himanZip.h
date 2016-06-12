@@ -63,6 +63,13 @@ Return the string representation of a huffman tree.
 void huffmanTreeToString(struct huffman_char* hufftree, char* returnString);
 
 /*
+Return the huffman tree represented by a string
+@param huffString The specified string
+@return Pointer to the root node of the huffman tree
+*/
+struct huffman_char* stringToHuffmanTree(char* huffString);
+
+/*
 Return the bitstring representation of a character
 @param the specified character
 @return the bitstring representation
