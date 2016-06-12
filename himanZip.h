@@ -18,21 +18,6 @@
 //Seems like a good arbitary limit
 #define MAX_ENCODING_SIZE 500
 
-//Structure used to map characters to frequencies. Also used to create huffman tree
-struct huffman_char{
-	char character;
-	int frequency;
-	char* encoding;
-	struct huffman_char* left;
-	struct huffman_char* right;
-};
-
-//Structure used to create a linkedlist of huffman chars
-struct huffman_list{
-	struct huffman_char huff;
-	struct huffman_list* next;
-};
-
 //List of characters and frequencies
 struct huffman_list* encoding_list = NULL;
 
@@ -61,7 +46,7 @@ Generates the huffman tree for the existing encoding list.
 @param Queue Pointer to empty priority queue
 @return Pointer to the root of the huffman tree. NULL upon error
 */
-struct huffman_char* generateHuffmanTree(void* Queue);
+struct huffman_char* generateHuffmanTree(struct prioQueue* Queue);
 
 /*
 Assigns encodings to characters in the encoding list according

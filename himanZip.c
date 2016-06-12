@@ -1,3 +1,4 @@
+#include "structs.h"
 #include "himanZip.h"
 #include "bitIO.c"
 #include "prioQueue.c"
@@ -96,9 +97,8 @@ int main(int argc, char** argv){
 	free(buff);
 
 	/* Generate the huffman tree */
-	void* pQueue = (void *) createQueue(); //use a void pointer to avoid compiler errors
+	struct prioQueue* pQueue = createQueue(); //use a void pointer to avoid compiler errors
 	huffman_tree = generateHuffmanTree(pQueue);
-	struct prioQueue* prQueue = (struct prioQueue*) pQueue;
 
 	/* Obtain bit encodings from huffman tree */ 
 	char* huffencoding = calloc(1,MAX_ENCODING_SIZE * sizeof(char));
@@ -120,23 +120,17 @@ int main(int argc, char** argv){
 	}
 
 	char* buf = calloc(1,sizeof(char));
-	char* toWrite = calloc(1,10000*sizeof(char));
+	char* toWrite = calloc(1,10000*sizeof(char)); //Cap off at size 10,000 bits for now.
 
 	/* Begin writing encoding */
-	while(read(fd,buf,1) > 0){
-		if(strlen(toWrite) > (10000- MAX_ENCODING_SIZE) && strlen(toWrite) % 8 == 0){
-			bitWrite(cfd,toWrite);
-			memset(toWrite,0,2000*sizeof(char));
-		}
-		strcat(toWrite,checkEncodingList(*buf)->huff.encoding);
-	}
+	while(read(fd,buf,1) > 0) strcat(toWrite,checkEncodingList(*buf)->huff.encoding);
 	bitWrite(cfd,toWrite);
 
 	/* Free resources and close files */
 	free(buf);
 	free(toWrite);
 	freeEncodingList();
-	deleteQueue(prQueue);
+	deleteQueue(pQueue);
 	close(fd);
 	close(cfd);
 
@@ -185,7 +179,7 @@ void printEncodingList(){
 
 }
 
-struct huffman_char* generateHuffmanTree(void* Queue){
+struct huffman_char* generateHuffmanTree(struct prioQueue* Queue){
 
 	struct prioQueue* pQueue = (struct prioQueue*) Queue;
 	struct huffman_list* temp = encoding_list;

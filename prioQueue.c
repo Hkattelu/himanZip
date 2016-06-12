@@ -53,9 +53,16 @@ struct huffman_char* removeQueue(struct prioQueue* priorityQueue){
 
 	if(priorityQueue->front == -1 || priorityQueue->front > priorityQueue->rear) return NULL;
 	
+	struct huffman_char* toReturn = priorityQueue->huff_queue[priorityQueue->front];
+
+	int i;
+	for(i = priorityQueue->front; i < priorityQueue->rear; i++){
+		priorityQueue->huff_queue[i] = priorityQueue->huff_queue[i+1];
+	}
+
 	//Grab the front element
-	priorityQueue->front++;
-	return priorityQueue->huff_queue[priorityQueue->front-1];
+	priorityQueue->rear--;
+	return toReturn;
 
 }
 
