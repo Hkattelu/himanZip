@@ -265,3 +265,32 @@ void assignEncodings(struct huffman_char* hufftree, char* encoding){
 	return;
 
 }
+
+char* huffmanTreeToString(struct huffman_char* hufftree, char* returnString){
+
+	if(hufftree->left == NULL && hufftree->right == NULL){
+		strcat(returnString,"1");
+		return charToBitString(hufftree->character);
+	} else {
+		strcat(returnString,"0");
+	}
+
+	if(hufftree->left != NULL) {
+		strcat(returnString, huffmanTreeToString(hufftree->left,returnString));
+	}
+
+	if(hufftree->right != NULL) {
+		strcat(returnString, huffmanTreeToString(hufftree->right,returnString));
+	}
+
+	return returnString;
+}
+
+char* charToBitString(char x){
+	char* toReturn = "";
+	int i;
+	for(i = 7; i > 0; i--){
+		strcat(toReturn, (x & (1 << x)) ? "1" : "0");
+	}
+	return toReturn;
+}

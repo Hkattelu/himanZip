@@ -70,3 +70,18 @@ to a specified huffman tree.
 @param encoding The empty string
 */
 void assignEncodings(struct huffman_char* hufftree, char* encoding);
+
+/*
+Return the string representation of a huffman tree.
+@param hufftree Pointer to the root of the specified huffman tree
+@param returnString The empty string
+@return The string representation
+*/
+char* huffmanTreeToString(struct huffman_char* hufftree, char* returnString);
+
+/*
+Return the bitstring representation of a character
+@param the specified character
+@return the bitstring representation
+*/
+char* charToBitString(char x);
