@@ -27,7 +27,6 @@ int bitWrite(int fd, char* bits){
 	int counter = 0;
 	char one = (char) 1; 
 	int len = strlen(bits);
-	printf("length:%d\n",len);
 	char buffer[1];
 	buffer[0] = '\0';
 	int retVal = 0;

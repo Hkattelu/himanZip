@@ -4,45 +4,35 @@ struct prioQueue* createQueue(){
 
 	struct prioQueue* priorityQueue = malloc(sizeof(struct prioQueue));
 	memset(priorityQueue->huff_queue,0,QUEUE_MAX * sizeof(struct huffman_char*));
-	priorityQueue->front = -1;
-	priorityQueue->rear = -1;
+	priorityQueue->size = 0;
 	return priorityQueue;
 
 }
 
 void insertQueue(struct huffman_char* huffchar,struct prioQueue* priorityQueue){
 
-	if(priorityQueue->front == -1 || priorityQueue->front > priorityQueue->rear){
+	if(priorityQueue->size == 0){
 
 		//If queue is empty, insert at the start
 		priorityQueue->huff_queue[0] = huffchar;
-		priorityQueue->front = 0;
-		priorityQueue->rear = 0;
+		priorityQueue->size++;
+
+	} else if (priorityQueue->size >= QUEUE_MAX - 1){
+
+		fprintf(stderr,"Cannot insert more into full queue.\n");
+		return;
 
 	} else {
 
-		//Go through the queue to find a spot to place the char
-		int index = priorityQueue->front;
-		while(huffchar->frequency < priorityQueue->huff_queue[index]->frequency && index <= priorityQueue->rear) 
-			index++;
-
-		//Storage variables
-		int counter = index;
-		struct huffman_char* tempchar = priorityQueue->huff_queue[counter];
-		struct huffman_char* tempchar2 = priorityQueue->huff_queue[counter];
-
-		//Copy over the rest of the list, then insert the char
-		while(counter <= priorityQueue->rear){
-			counter++;
-			tempchar2 = priorityQueue->huff_queue[counter];
-			priorityQueue->huff_queue[counter] = tempchar;
-			tempchar = tempchar2;
+		//Insert element as close to the rear as possible
+		int i;
+		for(i = priorityQueue->size-1; i >= 0; i--){
+			if(huffchar->frequency < priorityQueue->huff_queue[i]->frequency) priorityQueue->huff_queue[i+1] = priorityQueue->huff_queue[i];
+			if(huffchar->frequency >= priorityQueue->huff_queue[i]->frequency) break;
 		}
-
-		//Set value and increment end index
-		priorityQueue->huff_queue[index] = huffchar;
-		priorityQueue->rear++;
-
+		priorityQueue->huff_queue[i+1] = huffchar;
+		priorityQueue->size++;
+		
 	}
 
 	return;
@@ -51,28 +41,30 @@ void insertQueue(struct huffman_char* huffchar,struct prioQueue* priorityQueue){
 
 struct huffman_char* removeQueue(struct prioQueue* priorityQueue){
 
-	if(priorityQueue->front == -1 || priorityQueue->front > priorityQueue->rear) return NULL;
+	if(priorityQueue->size == 0) return NULL;
 	
-	struct huffman_char* toReturn = priorityQueue->huff_queue[priorityQueue->front];
+	//Grab the front element
+	struct huffman_char* toReturn = priorityQueue->huff_queue[0];
 
+	//Push all elements back 1
 	int i;
-	for(i = priorityQueue->front; i < priorityQueue->rear; i++){
+	for(i = 0; i < priorityQueue->size; i++){
 		priorityQueue->huff_queue[i] = priorityQueue->huff_queue[i+1];
 	}
 
-	//Grab the front element
-	priorityQueue->rear--;
+	priorityQueue->size--;
+
 	return toReturn;
 
 }
 
 void deleteQueue(struct prioQueue* priorityQueue){
-
-	memset(priorityQueue->huff_queue,0,QUEUE_MAX * sizeof(struct huffman_char*) + 2*sizeof(int));
+	//Free space
+	memset(priorityQueue->huff_queue,0,QUEUE_MAX * sizeof(struct huffman_char*) + sizeof(int));
 	free(priorityQueue);
 
 }
 
 int queueSize(struct prioQueue* priorityQueue){
-	return priorityQueue->rear - priorityQueue->front + 1;
+	return priorityQueue->size;
 }

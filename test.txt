@@ -1,1 +1,1 @@
-This is a sentence. Testing Himanshu's file zipper known as himanZip.
+This is a test file. It tests Himanshu's file compressor.

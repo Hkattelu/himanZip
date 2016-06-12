@@ -10,8 +10,7 @@
 //Priority Queue Structure
 struct prioQueue{
 	struct huffman_char* huff_queue[QUEUE_MAX];
-	int front;
-	int rear;
+	int size;
 };
 
 //Structure used to map characters to frequencies. Also used to create huffman tree

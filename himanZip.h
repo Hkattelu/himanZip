@@ -1,8 +1,3 @@
-#include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
-
 //Usage statement
 #define USAGE(name) do{									\
 	printf(										\
@@ -56,8 +51,9 @@ Assigns encodings to characters in the encoding list according
 to a specified huffman tree.
 @param hufftree The root of the specified huffman tree
 @param encoding The empty string
+@param length Zero
 */
-void assignEncodings(struct huffman_char* hufftree, char* encoding);
+void assignEncodings(struct huffman_char* hufftree, char* encoding, int length);
 
 /*
 Return the string representation of a huffman tree.
