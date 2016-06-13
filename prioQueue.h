@@ -30,8 +30,3 @@ Return the number of elements currently in a queue
 @return the number of elements in the queue
 */
 int queueSize(struct prioQueue* priorityQueue);
-
-
-
-
-

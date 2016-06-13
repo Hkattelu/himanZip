@@ -45,10 +45,28 @@ int main(int argc, char** argv){
 		}
 	}
 
+	/* Open File */
+
+	//Check if the file exists
+	struct stat sb1;
+  	memset(&sb1,0,sizeof(sb1));
+
+	if(stat(file,&sb1) < 0){
+		fprintf(stderr,"%s does not exist, aborting compression.\n", file);
+		exit(EXIT_FAILURE);
+	}
+
+	file = argv[argc-1];
+	int fd;
+	if((fd = open(file,O_RDONLY)) < 1){
+		fprintf(stderr,"Failed to open file.\n");
+		exit(EXIT_FAILURE);
+	}
+
 	if(decompress > 0){
 
 		//Check if the file is of type .hzip
-		if((strstr(file,".hzip") == NULL){
+		if((strstr(file,".hzip")) == NULL){
 			fprintf(stderr,"File not of type .hzip, aborting.\n");
 			exit(EXIT_FAILURE);
 		}
@@ -64,17 +82,46 @@ int main(int argc, char** argv){
 			exit(EXIT_FAILURE);
 		}
 
-		printf("Still have to do decompression.\n");
-		exit(EXIT_SUCCESS);
-	}
+		int cfd;
+		if((cfd = open(file,O_RDWR | O_CREAT)) < 0){
+			fprintf(stderr, "Failed to open file. \n");
+			exit(EXIT_FAILURE);
+		}
 
-	/* Open File */
+		//Start decompression
+		
+		/* Obtain the Huffman tree length from header bytes */
+		char* lengthBuff = "hi";
+		read(fd,lengthBuff,2);
 
-	file = argv[argc-1];
-	int fd;
-	if((fd = open(file,O_RDONLY)) < 1){
-		fprintf(stderr,"Failed to open file.\n");
-		exit(EXIT_FAILURE);
+		int huffTreeLength = (int) lengthBuff[0] & ((int) lengthBuff[1] << 8);
+		bitstringBuff = malloc(9*sizeof(char));
+
+		/* Obtain the Huffman tree from the file */
+		char* huffBuffer = calloc(1,MAX_TREE_SIZE * sizeof(char));
+		bitRead(fd,huffTreeLength,huffBuffer);
+		struct huffman_char* decodeTree = stringToHuffmanTree(huffBuffer);
+
+		/* Obtain the encoding length from header bytes */
+		char* encodingLengthBuff = "boom";
+		read(fd,encodingLengthBuff,4);
+		int encodingLength = (int) encodingLengthBuff[0] 
+							& ((int) encodingLengthBuff[1] << 8)
+						    & ((int) encodingLengthBuff[2] << 16)
+						     & ((int) encodingLengthBuff[3] << 24);
+
+		/* Obtain the encoded bits from the file */
+		char* decodeBuffer = calloc(1,MAX_ZIP_FILE_SIZE * sizeof(char));
+		bitRead(fd,encodingLength,decodeBuffer);
+
+
+
+		/* Free up resources */
+		free(decodeBuffer);
+		free(bitstringBuff);
+		free(huffBuffer);
+	
+		return 0;	
 	}
 
 	//Check if the zipped version of the file already exists
@@ -139,20 +186,31 @@ int main(int argc, char** argv){
 	}
 
 	char* buf = calloc(1,sizeof(char));
-	char* toWrite = calloc(1,10000*sizeof(char)); //Cap off at size 10,000 bits for now.
+	char* toWrite = calloc(1,MAX_ZIP_FILE_SIZE*sizeof(char)); 
 	bitstringBuff = calloc(1,9 * sizeof(char));
 
 	/* Write the Huffman tree */
-	char* huffBuff = calloc(1,3000*sizeof(char));
+	char* huffBuff = calloc(1,MAX_TREE_SIZE*sizeof(char));
 	huffmanTreeToString(huffman_tree,huffBuff);
 	int huffLen = strlen(huffBuff);
 
-	bitWrite(cfd,charToBitString((char) huffLen >> 8)); //Max tree size of 2^16 for now
+	bitWrite(cfd,charToBitString((char) huffLen >> 8)); //Max tree size of 2^16
 	bitWrite(cfd,charToBitString((char) huffLen)); //First write tree length for decompression
 	bitWrite(cfd,huffBuff); //Now write tree itself
 
 	/* Begin writing encoding */
-	while(read(fd,buf,1) > 0) strcat(toWrite,checkEncodingList(*buf)->huff.encoding);
+	while(read(fd,buf,1) > 0) {
+		strcat(toWrite,checkEncodingList(*buf)->huff.encoding);
+	}
+
+	//Write the encoding length in bits in a 4-byte header
+	int encodingLen = strlen(toWrite);
+	bitWrite(cfd,charToBitString((char) encodingLen >> 24));
+	bitWrite(cfd,charToBitString((char) encodingLen >> 16));
+	bitWrite(cfd,charToBitString((char) encodingLen >> 8));
+	bitWrite(cfd,charToBitString((char) encodingLen));
+
+	//Write the actual encoding
 	bitWrite(cfd,toWrite);
 
 	/* Free resources and close files */
@@ -322,18 +380,18 @@ void huffmanTreeToString(struct huffman_char* hufftree, char* returnString){
 
 struct huffman_char* stringToHuffmanTree(char* huffString){
 
-	return NULL;
-}
+	/*
+	if(huffString[0] == '1'){
 
-char* charToBitString(char x){
-	int i;
 
-	//Grab each bit
-	for(i = 7; i >= 0; i--){
+	} else if (huffString[0] == '0'){
 
-		//Will evalute to true if the bit is 1
-		if(x & (1 << i)) bitstringBuff[7-i] = '1';
-		else bitstringBuff[7-i] = '0';
+		struct huffman_char* node = calloc(1,sizeof(struct huffman_char));
+
+
 	}
-	return bitstringBuff;
+	*/
+
+	return NULL;
+
 }

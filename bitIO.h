@@ -1,15 +1,14 @@
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
+//Buffer used to convert characters to bit strings
+char* bitstringBuff = NULL;
 
 /* 
 Reads the next bit from the file described by fd into buffer
-@return 0 on success, 1 on failure
+@return 0 on success, -1 on failure
 @param fd File descriptor of file to read from
-@param bitNum integer value from 0-7 describing which bit to read. Incremented on each call.
-@param buffer pointer to buffer to write the bit to 
+@param bitNum Number of bits to read into buffer
+@param buffer pointer to buffer to write the bits to 
 */
-int bitRead(int fd, int bitNum, void* buffer);
+int bitRead(int fd, int bitNum, char* buffer);
 
 /*
 Writes the specified string into the file described by fd such that
@@ -19,3 +18,17 @@ each string character is one bit.
 @return The number of bytes written
 */
 int bitWrite(int fd, char* bits);
+
+/*
+Return the bitstring representation of a character
+@param the specified character
+@return the bitstring representation
+*/
+char* charToBitString(char x);
+
+/*
+Return the character represented by a bitstring
+@param the specified bitstring
+@return the character represented by bitstring
+*/
+char bitStringtoChar(char* bitString);

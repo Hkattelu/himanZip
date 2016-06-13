@@ -10,17 +10,20 @@
 		); \
 	} while(0)
 
-//Seems like a good arbitary limit
-#define MAX_ENCODING_SIZE 500
+//Maximum size of a dynamic huffman code in bits (overestimate)
+#define MAX_ENCODING_SIZE 257
+
+//1-byte huffman tree cannot exceed 3000 bits
+#define MAX_TREE_SIZE 3000
+
+//Seems like a good max for now (in bits)
+#define MAX_ZIP_FILE_SIZE 100000
 
 //List of characters and frequencies
 struct huffman_list* encoding_list = NULL;
 
 //Huffman tree used to encode characters
 struct huffman_char* huffman_tree = NULL;
-
-//Buffer used to convert characters to bit strings
-char* bitstringBuff = NULL;
 
 /*
 Check if character c exists in our encoding list.
@@ -68,10 +71,3 @@ Return the huffman tree represented by a string
 @return Pointer to the root node of the huffman tree
 */
 struct huffman_char* stringToHuffmanTree(char* huffString);
-
-/*
-Return the bitstring representation of a character
-@param the specified character
-@return the bitstring representation
-*/
-char* charToBitString(char x);
