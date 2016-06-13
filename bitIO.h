@@ -31,4 +31,4 @@ Return the character represented by a bitstring
 @param the specified bitstring
 @return the character represented by bitstring
 */
-char bitStringtoChar(char* bitString);
+char bitStringToChar(char* bitString);

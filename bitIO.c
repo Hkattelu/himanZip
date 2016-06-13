@@ -67,7 +67,7 @@ char* charToBitString(char x){
 	return bitstringBuff;
 }
 
-char bitStringtoChar(char* bitString){
+char bitStringToChar(char* bitString){
 	char toReturn = '\0';
 	int i;
 

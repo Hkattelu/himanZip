@@ -48,6 +48,8 @@ int main(int argc, char** argv){
 	/* Open File */
 
 	//Check if the file exists
+	file = argv[argc-1];
+
 	struct stat sb1;
   	memset(&sb1,0,sizeof(sb1));
 
@@ -56,10 +58,9 @@ int main(int argc, char** argv){
 		exit(EXIT_FAILURE);
 	}
 
-	file = argv[argc-1];
 	int fd;
 	if((fd = open(file,O_RDONLY)) < 1){
-		fprintf(stderr,"Failed to open file.\n");
+		fprintf(stderr,"Failed to open file. Check hZip permissions.\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -83,7 +84,7 @@ int main(int argc, char** argv){
 		}
 
 		int cfd;
-		if((cfd = open(file,O_RDWR | O_CREAT)) < 0){
+		if((cfd = open(file,O_RDWR | O_CREAT, 0666)) < 0){
 			fprintf(stderr, "Failed to open file. \n");
 			exit(EXIT_FAILURE);
 		}
@@ -114,12 +115,37 @@ int main(int argc, char** argv){
 		char* decodeBuffer = calloc(1,MAX_ZIP_FILE_SIZE * sizeof(char));
 		bitRead(fd,encodingLength,decodeBuffer);
 
+		/* Finally, decompress the file */
+		struct huffman_char* temp = decodeTree;
+		while(encodingLength-- > 0){
+			if(decodeBuffer[0] == '0'){
+				temp = temp->left;
+			} else if (decodeBuffer[0] == '1'){
+				temp = temp->right;
+			} else {
+				fprintf(stderr, "Invalid encoding.\n");
+				free(decodeBuffer);
+				free(bitstringBuff);
+				free(huffBuffer);
+				close(fd);
+				close(cfd);
+				exit(EXIT_FAILURE);
+			}
 
+			if(temp->left == NULL && temp->right == NULL){
+				write(cfd,&temp->character,1);
+				temp = decodeTree;
+			}
+
+			decodeBuffer++;
+		}
 
 		/* Free up resources */
 		free(decodeBuffer);
 		free(bitstringBuff);
 		free(huffBuffer);
+		close(fd);
+		close(cfd);
 	
 		return 0;	
 	}
@@ -175,7 +201,7 @@ int main(int argc, char** argv){
 
 	/* Create Zip file */
 	int cfd;
-	if((cfd = open(file,O_RDWR | O_CREAT)) < 0){
+	if((cfd = open(file,O_RDWR | O_CREAT, 0666)) < 0){
 		fprintf(stderr, "Failed to open file. \n");
 		exit(EXIT_FAILURE);
 	}
@@ -380,18 +406,25 @@ void huffmanTreeToString(struct huffman_char* hufftree, char* returnString){
 
 struct huffman_char* stringToHuffmanTree(char* huffString){
 
-	/*
 	if(huffString[0] == '1'){
 
+		//1's represent leaf nodes and are succeeded by 8 bits representing the character.
+		struct huffman_char* leaf = calloc(1,sizeof(struct huffman_char));
+		leaf->character = bitStringToChar(++huffString);
+		huffString += 8;
+		return leaf;
 
 	} else if (huffString[0] == '0'){
 
+		//0's represent non-leaf nodes and are succeeded by the left subtree, then the right
 		struct huffman_char* node = calloc(1,sizeof(struct huffman_char));
 
+		node->left = stringToHuffmanTree(++huffString);
+		node->right = stringToHuffmanTree(huffString);
 
+		return node;
 	}
-	*/
 
-	return NULL;
-
+	return NULL; //Invalid huffman string
+	
 }
