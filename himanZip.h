@@ -11,7 +11,7 @@
 	} while(0)
 
 //Maximum size of a dynamic huffman code in bits (overestimate)
-#define MAX_ENCODING_SIZE 257
+#define MAX_ENCODING_SIZE 260
 
 //1-byte huffman tree cannot exceed 3000 bits
 #define MAX_TREE_SIZE 3000
@@ -24,6 +24,11 @@ struct huffman_list* encoding_list = NULL;
 
 //Huffman tree used to encode characters
 struct huffman_char* huffman_tree = NULL;
+
+int decompress = 0; //Decompression flag
+int verbose = 0; //Verbose flag
+
+int huffstringptr = 0; //Used internally to create huffman tree from string
 
 /*
 Check if character c exists in our encoding list.

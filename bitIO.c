@@ -68,10 +68,14 @@ char* charToBitString(char x){
 }
 
 char bitStringToChar(char* bitString){
-	char toReturn = '\0';
+	char toReturn = 0x00;
 	int i;
 
 	//Replace the bits of the null character by 1 if there is a 1 in the bitstring
-	for(i = 7;i >= 0; i--) if(bitString[7-i] == '1') toReturn = toReturn | (0x01 << (7-i));
+	for(i = 0;i <= 7; i++) {
+		if(bitString[i] == '1'){
+			toReturn = toReturn | (0x01 << (7-i));
+		}
+	}
 	return toReturn;
 }

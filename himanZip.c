@@ -8,8 +8,6 @@ int main(int argc, char** argv){
 	/*Parse inputs*/
 
 	int opt;
-	int decompress = 0;
-	int verbose = 0;
 	char* file = NULL; 
 	int parseCount = 2;
 
@@ -92,30 +90,41 @@ int main(int argc, char** argv){
 		//Start decompression
 		
 		/* Obtain the Huffman tree length from header bytes */
-		char* lengthBuff = "hi";
-		read(fd,lengthBuff,2);
+		char* lengthBuff = calloc(1,4*sizeof(char));
+		if(read(fd,lengthBuff,4) < 0){
+			perror("Read fail");
+			exit(EXIT_FAILURE);
+		}
 
-		int huffTreeLength = (unsigned int) lengthBuff[0] | ((unsigned int) lengthBuff[1] << 8);
+		int huffTreeLength = *(( int*) lengthBuff);
+		free(lengthBuff);
 		bitstringBuff = malloc(9*sizeof(char));
 
 		/* Obtain the Huffman tree from the file */
 		char* huffBuffer = calloc(1,MAX_TREE_SIZE * sizeof(char));
-		bitRead(fd,huffTreeLength,huffBuffer);
+		if(bitRead(fd,huffTreeLength,huffBuffer) < 0){
+			perror("Bit Read");
+			exit(EXIT_FAILURE);
+		}
+
 		struct huffman_char* decodeTree = stringToHuffmanTree(huffBuffer);
 
 		if(verbose == 1) printEncodingList();
 
 		/* Obtain the encoding length from header bytes */
-		char* encodingLengthBuff = "boom";
-		read(fd,encodingLengthBuff,4);
-		int encodingLength = (unsigned int) encodingLengthBuff[0] 
-							| ((unsigned int) encodingLengthBuff[1] << 8)
-						    | ((unsigned int) encodingLengthBuff[2] << 16)
-						    | ((unsigned int) encodingLengthBuff[3] << 24);
+		char* encodingLengthBuff = calloc(1,4*sizeof(char));
+		if(read(fd,encodingLengthBuff,4) < 0){
+			perror("Read fail");
+			exit(EXIT_FAILURE);
+		}
+
+		int encodingLength = *((int*) encodingLengthBuff); 
+		free(encodingLengthBuff);
 
 		/* Obtain the encoded bits from the file */
-		char* decodeBuffer = calloc(1,MAX_ZIP_FILE_SIZE * sizeof(char));
-		bitRead(fd,encodingLength,decodeBuffer);
+		char* decodeBufferStart = calloc(1,MAX_ZIP_FILE_SIZE * sizeof(char));
+		bitRead(fd,encodingLength,decodeBufferStart);
+		char* decodeBuffer = decodeBufferStart;
 
 		/* Finally, decompress the file */
 		struct huffman_char* temp = decodeTree;
@@ -139,7 +148,7 @@ int main(int argc, char** argv){
 		}
 
 		/* Free up resources */
-		free(decodeBuffer);
+		free(decodeBufferStart);
 		free(bitstringBuff);
 		free(huffBuffer);
 		freeEncodingList();
@@ -217,10 +226,9 @@ int main(int argc, char** argv){
 	/* Write the Huffman tree */
 	char* huffBuff = calloc(1,MAX_TREE_SIZE*sizeof(char));
 	huffmanTreeToString(huffman_tree,huffBuff);
-	unsigned int huffLen = strlen(huffBuff);
+	int huffLen = strlen(huffBuff);
 
-	bitWrite(cfd,charToBitString((char) huffLen >> 8)); //Max tree size of 2^16
-	bitWrite(cfd,charToBitString((char) huffLen)); //First write tree length for decompression
+	write(cfd,&huffLen,4); //First write the tree length 
 	bitWrite(cfd,huffBuff); //Now write tree itself
 
 	/* Begin writing encoding */
@@ -229,11 +237,8 @@ int main(int argc, char** argv){
 	}
 
 	//Write the encoding length in bits in a 4-byte header
-	unsigned int encodingLen = strlen(toWrite);
-	bitWrite(cfd,charToBitString((char) encodingLen >> 24));
-	bitWrite(cfd,charToBitString((char) encodingLen >> 16));
-	bitWrite(cfd,charToBitString((char) encodingLen >> 8));
-	bitWrite(cfd,charToBitString((char) encodingLen));
+	int encodingLen = strlen(toWrite);
+	write(cfd,&encodingLen, 4);
 
 	//Write the actual encoding
 	bitWrite(cfd,toWrite);
@@ -285,7 +290,7 @@ void assignEncodings(struct huffman_char* hufftree, char* encoding, int length){
 		assignEncodings(hufftree->right,encoding,length+1);
 	}
 
-	encoding[length - 1] = '\0';
+	if(length > 0)encoding[length - 1] = '\0';
 	return;
 
 }
@@ -327,11 +332,18 @@ void printEncodingList(){
 	//Loop through the list to print characters
 	while(temp != NULL){
 
-		if(temp->huff.character != '*'){
-			printf("Char: %c, Frequency: %d, Encoding: %s\n",
-				temp->huff.character,
-				temp->huff.frequency,
-				temp->huff.encoding);
+		if(decompress == 0){
+			if(temp->huff.character != '*'){
+				printf("Char: %c, Frequency: %d, Encoding: %s\n",
+					temp->huff.character,
+					temp->huff.frequency,
+					temp->huff.encoding);
+			}
+		} else if (decompress > 0) {
+			if(temp->huff.left == NULL && temp->huff.right == NULL){
+				printf("Char: %c\n",
+					temp->huff.character);
+			}
 		}
 		temp = temp->next;
 	}
@@ -387,6 +399,7 @@ void huffmanTreeToString(struct huffman_char* hufftree, char* returnString){
 		//Leaf nodes are preceded by a "1"
 		strcat(returnString,"1");
 		strcat(returnString,charToBitString(hufftree->character));
+		return;
 	} else {
 		//Non-leaves are preceded by a "0"
 		strcat(returnString,"0");
@@ -407,23 +420,25 @@ struct huffman_char* stringToHuffmanTree(char* huffString){
 
 	struct huffman_list* newNode = NULL;
 
-	if(huffString[0] == '1'){
+	if(huffString[huffstringptr] == '1'){
 
 		//1's represent leaf nodes and are succeeded by 8 bits representing the character.
 		newNode = calloc(1,sizeof(struct huffman_list));
 		newNode->next = encoding_list;
 		encoding_list = newNode;
-		newNode->huff.character = bitStringToChar(++huffString);
-		huffString += 8;
+		huffstringptr++;
+		newNode->huff.character = bitStringToChar(&huffString[huffstringptr]);
+		huffstringptr += 8;
 
-	} else if (huffString[0] == '0'){
+	} else if (huffString[huffstringptr] == '0'){
 
 		//0's represent non-leaf nodes and are succeeded by the left subtree, then the right
 		newNode = calloc(1,sizeof(struct huffman_list));
 		newNode->next = encoding_list;
 		encoding_list = newNode;
 
-		newNode->huff.left = stringToHuffmanTree(++huffString);
+		huffstringptr++;
+		newNode->huff.left = stringToHuffmanTree(huffString);
 		newNode->huff.right = stringToHuffmanTree(huffString);
 
 	}
