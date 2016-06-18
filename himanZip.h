@@ -20,7 +20,9 @@
 #define MAX_ZIP_FILE_SIZE 100000
 
 //Seems like a good max for now (in bits)
-#define MAX_UNZIP_FILE_SIZE 100000
+#define MAX_UNZIP_FILE_SIZE 1000000
+
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
 
 //List of characters and frequencies
 struct huffman_list* encoding_list = NULL;
@@ -32,6 +34,21 @@ int decompress = 0; //Decompression flag
 int verbose = 0; //Verbose flag
 
 int huffstringptr = 0; //Used internally to create huffman tree from string
+
+/*
+Assigns encodings to characters in the encoding list according
+to a specified huffman tree.
+@param hufftree The root of the specified huffman tree
+@param encoding The empty string
+@param length Zero
+*/
+void assignEncodings(struct huffman_char* hufftree, char* encoding, int length);
+
+/*
+Return the total length in bits of the file when compressed
+@return the number of bits
+*/
+int getEncodingLength();
 
 /*
 Check if character c exists in our encoding list.
@@ -56,21 +73,6 @@ Generates the huffman tree for the existing encoding list.
 @return Pointer to the root of the huffman tree. NULL upon error
 */
 struct huffman_char* generateHuffmanTree(struct prioQueue* Queue);
-
-/*
-Assigns encodings to characters in the encoding list according
-to a specified huffman tree.
-@param hufftree The root of the specified huffman tree
-@param encoding The empty string
-@param length Zero
-*/
-void assignEncodings(struct huffman_char* hufftree, char* encoding, int length);
-
-/*
-Return the total length in bits of the file when compressed
-@return the number of bits
-*/
-int getEncodingLength();
 
 /*
 Return the string representation of a huffman tree.

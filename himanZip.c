@@ -6,7 +6,6 @@
 int main(int argc, char** argv){
 
 	/*Parse inputs*/
-
 	int opt;
 	char* file = NULL; 
 	int parseCount = 2;
@@ -76,27 +75,24 @@ int main(int argc, char** argv){
 		struct stat sb;
 	  	memset(&sb,0,sizeof(struct stat));
 
-		if(stat(file,&sb) > -1){
-
-			while(1){
-				fprintf(stdout,"File %s already exists. Overwrite anyway? y/n: \n" ,file);
+		while(stat(file,&sb) > -1){
 			
-				char response = '\0';
-				memset(&response,0,sizeof(char));
-				if(scanf(" %c",&response) <= 0){
-					fprintf(stderr,"Invalid response, aborting.\n");
-					exit(EXIT_FAILURE);
-				}
-				if(response == 'n'){
-					printf("Aborting.\n");
-					exit(EXIT_SUCCESS);
-				} else if (response == 'y'){
-					remove(file);
-					break;
-				}
-
+			fprintf(stdout,"File %s already exists. Overwrite anyway? y/n: \n" ,file);
+		
+			char response = '\0';
+			memset(&response,0,sizeof(char));
+			if(scanf(" %c",&response) <= 0){
+				fprintf(stderr,"Invalid response, aborting.\n");
+				exit(EXIT_FAILURE);
 			}
-
+			if(response == 'n'){
+				printf("Aborting.\n");
+				exit(EXIT_SUCCESS);
+			} else if (response == 'y'){
+				remove(file);
+				break;
+			}
+	
 		}
 
 		int cfd;
@@ -151,29 +147,36 @@ int main(int argc, char** argv){
 
 		/* Obtain the encoded bits from the file */
 		char* decodeBufferStart = calloc(1,MAX_UNZIP_FILE_SIZE * sizeof(char));
-		bitRead(fd,encodingLength,decodeBufferStart);
-		char* decodeBuffer = decodeBufferStart;
+		int counter = MIN(encodingLength,MAX_UNZIP_FILE_SIZE);
 
-		/* Finally, decompress the file */
-		struct huffman_char* temp = decodeTree;
-		while(encodingLength-- > 0){
+		//Decompress the file in MAX_UNZIP_FILE_SIZE sized chunks
+		while(bitRead(fd,counter,decodeBufferStart) >= 0){
+			char* decodeBuffer = decodeBufferStart;
+			struct huffman_char* temp = decodeTree;
+			encodingLength -= counter;
 
-			if(decodeBuffer[0] == '0'){
-				temp = temp->left; //Move to left subtree on 0
-			} else if (decodeBuffer[0] == '1'){
-				temp = temp->right; //Move to right subtree on 1
-			} 
+			while(counter-- > 0){
 
-			if(decodeBuffer[0] != '0' && decodeBuffer[0] != '1') break; //Invalid encoding string
+				if(decodeBuffer[0] == '0')
+					temp = temp->left; //Move to left subtree on 0
+				else if (decodeBuffer[0] == '1')
+					temp = temp->right; //Move to right subtree on 1
+				
+				//Invalid encoding string
+				if(decodeBuffer[0] != '0' && decodeBuffer[0] != '1') break; 
 
-			//If we are at a leaf node, write the character
-			if(temp->left == NULL && temp->right == NULL){
-				write(cfd,&temp->character,1);
-				temp = decodeTree;
+				//If we are at a leaf node, write the character
+				if(temp->left == NULL && temp->right == NULL){
+					write(cfd,&temp->character,1);
+					temp = decodeTree;
+				}
+
+				decodeBuffer++;
 			}
 
-			decodeBuffer++;
-		}
+			if((counter = MIN(encodingLength,MAX_UNZIP_FILE_SIZE)) <= 0) break;
+			memset(decodeBufferStart,0,MAX_UNZIP_FILE_SIZE);
+		}	
 
 		/* Free up resources */
 		free(decodeBufferStart);
@@ -191,10 +194,10 @@ int main(int argc, char** argv){
 	struct stat sb;
   	memset(&sb,0,sizeof(sb));
 
+  	//Overwrite file if the user wishes
 	if(stat(file,&sb) > -1){
 		while(1){
 			fprintf(stdout,"File %s already exists. Overwrite anyway? y/n: \n" ,file);
-		
 			char response = '\0';
 			memset(&response,0,sizeof(char));
 			if(scanf(" %c",&response) <= 0){
@@ -212,13 +215,11 @@ int main(int argc, char** argv){
 	}
 
 	/* Process the file to obtain an encoding list */
-
 	char* buff = calloc(1,sizeof(char));
 	struct huffman_list* encoding;
 
 	//Read through the file and obtain frequences of each character
 	while(read(fd,buff,1) > 0){
-
 		if((encoding = checkEncodingList(*buff)) == NULL){
 
 			//If the character does not exist in the list, append it to the start of the list
@@ -235,7 +236,6 @@ int main(int argc, char** argv){
 			//If it does exist, simply increment the frequency
 			encoding->huff.frequency++;
 		}
-
 	}
 	free(buff);
 
@@ -278,7 +278,7 @@ int main(int argc, char** argv){
 	int encodingLen = getEncodingLength();
 	write(cfd,&encodingLen, 4);
 
-	/* Begin writing encoding */
+	/* Begin writing encoding in chunks*/
 	while(read(fd,buf,1) > 0) {
 		strcat(toWrite,checkEncodingList(*buf)->huff.encoding);
 		if(strlen(toWrite) % 8 == 0){
@@ -287,7 +287,7 @@ int main(int argc, char** argv){
 		}
 	}
 
-	//Write the actual encoding
+	//Write the remaining encoding
 	bitWrite(cfd,toWrite);
 
 	/* Free resources and close files */
@@ -311,7 +311,6 @@ void assignEncodings(struct huffman_char* hufftree, char* encoding, int length){
 		//Find the leaf node character in the encoding list
 		struct huffman_list* temp = encoding_list;
 		while(temp != NULL){
-
 			if(&temp->huff == hufftree) break;
 			temp = temp->next;
 		}
@@ -339,7 +338,6 @@ void assignEncodings(struct huffman_char* hufftree, char* encoding, int length){
 
 	if(length > 0)encoding[length - 1] = '\0';
 	return;
-
 }
 
 int getEncodingLength(){
@@ -468,13 +466,11 @@ void huffmanTreeToString(struct huffman_char* hufftree, char* returnString){
 		strcat(returnString,"0");
 	}
 
-	if(hufftree->left != NULL) {
+	if(hufftree->left != NULL) 
 		huffmanTreeToString(hufftree->left,returnString); //Left subtree
-	}
 
-	if(hufftree->right != NULL) {
+	if(hufftree->right != NULL)
 		huffmanTreeToString(hufftree->right,returnString); //Right subtree
-	}
 
 	return;
 }
@@ -510,4 +506,3 @@ struct huffman_char* stringToHuffmanTree(char* huffString){
 	return NULL;
 
 }
-

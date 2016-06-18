@@ -2,6 +2,8 @@
 
 int bitRead(int fd, int bitNum, char* buffer){
 
+	if(bitNum < 0) return -1;
+
 	//Prepare buffer and read from file
 	char bitBuff;
 	memset(&bitBuff,0,sizeof(char));
