@@ -52,7 +52,7 @@ int main(int argc, char** argv){
   	memset(&sb1,0,sizeof(sb1));
 
 	if(stat(file,&sb1) < 0){
-		fprintf(stderr,"%s does not exist, aborting compression.\n", file);
+		fprintf(stderr,"%s does not exist, aborting.\n", file);
 		exit(EXIT_FAILURE);
 	}
 
@@ -74,11 +74,29 @@ int main(int argc, char** argv){
 
 		//Check if the unzipped version of the file already exists
 		struct stat sb;
-	  	memset(&sb,0,sizeof(sb));
+	  	memset(&sb,0,sizeof(struct stat));
 
 		if(stat(file,&sb) > -1){
-			fprintf(stderr,"%s already exists, aborting compression.\n", file);
-			exit(EXIT_FAILURE);
+
+			while(1){
+				fprintf(stdout,"File %s already exists. Overwrite anyway? y/n: \n" ,file);
+			
+				char response = '\0';
+				memset(&response,0,sizeof(char));
+				if(scanf(" %c",&response) <= 0){
+					fprintf(stderr,"Invalid response, aborting.\n");
+					exit(EXIT_FAILURE);
+				}
+				if(response == 'n'){
+					printf("Aborting.\n");
+					exit(EXIT_SUCCESS);
+				} else if (response == 'y'){
+					remove(file);
+					break;
+				}
+
+			}
+
 		}
 
 		int cfd;
@@ -121,8 +139,18 @@ int main(int argc, char** argv){
 		int encodingLength = *((int*) encodingLengthBuff); 
 		free(encodingLengthBuff);
 
+		if(encodingLength > MAX_UNZIP_FILE_SIZE){
+			fprintf(stderr, "The file is too big to unzip for now, aborting.\n");
+			free(bitstringBuff);
+			free(huffBuffer);
+			freeEncodingList();
+			close(fd);
+			close(cfd);
+			exit(EXIT_FAILURE);
+		}
+
 		/* Obtain the encoded bits from the file */
-		char* decodeBufferStart = calloc(1,MAX_ZIP_FILE_SIZE * sizeof(char));
+		char* decodeBufferStart = calloc(1,MAX_UNZIP_FILE_SIZE * sizeof(char));
 		bitRead(fd,encodingLength,decodeBufferStart);
 		char* decodeBuffer = decodeBufferStart;
 
@@ -164,8 +192,23 @@ int main(int argc, char** argv){
   	memset(&sb,0,sizeof(sb));
 
 	if(stat(file,&sb) > -1){
-		fprintf(stderr,"%s already exists, aborting compression.\n", file);
-		exit(EXIT_FAILURE);
+		while(1){
+			fprintf(stdout,"File %s already exists. Overwrite anyway? y/n: \n" ,file);
+		
+			char response = '\0';
+			memset(&response,0,sizeof(char));
+			if(scanf(" %c",&response) <= 0){
+				fprintf(stderr,"Invalid response, aborting.\n");
+				exit(EXIT_FAILURE);
+			}
+			if(response == 'n'){
+				printf("Aborting.\n");
+				exit(EXIT_SUCCESS);
+			} else if (response == 'y'){
+				remove(file);
+				break;
+			}
+		}
 	}
 
 	/* Process the file to obtain an encoding list */
@@ -231,14 +274,18 @@ int main(int argc, char** argv){
 	write(cfd,&huffLen,4); //First write the tree length 
 	bitWrite(cfd,huffBuff); //Now write tree itself
 
+	//Write the encoding length in bits in a 4-byte header
+	int encodingLen = getEncodingLength();
+	write(cfd,&encodingLen, 4);
+
 	/* Begin writing encoding */
 	while(read(fd,buf,1) > 0) {
 		strcat(toWrite,checkEncodingList(*buf)->huff.encoding);
+		if(strlen(toWrite) % 8 == 0){
+			bitWrite(cfd,toWrite);
+			memset(toWrite,0,strlen(toWrite) * sizeof(char));
+		}
 	}
-
-	//Write the encoding length in bits in a 4-byte header
-	int encodingLen = strlen(toWrite);
-	write(cfd,&encodingLen, 4);
 
 	//Write the actual encoding
 	bitWrite(cfd,toWrite);
@@ -295,13 +342,29 @@ void assignEncodings(struct huffman_char* hufftree, char* encoding, int length){
 
 }
 
+int getEncodingLength(){
+
+	int returnVal = 0;
+	struct huffman_list* temp = encoding_list;
+
+	//Loop through the list to get
+	while(temp != NULL){
+		if(temp->huff.left == NULL && temp->huff.right == NULL)	
+			returnVal += strlen(temp->huff.encoding) * temp->huff.frequency;
+		temp = temp->next;
+	}
+
+	return returnVal;
+}
+
 struct huffman_list* checkEncodingList(char c){
 
 	struct huffman_list* temp = encoding_list;
 
 	//Loop through the list to find the character
 	while(temp != NULL){
-		if(c == temp->huff.character) return temp;
+		if(c == temp->huff.character && temp->huff.left == NULL && temp->huff.right == NULL)
+			return temp;
 		temp = temp->next;
 	}
 

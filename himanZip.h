@@ -19,6 +19,9 @@
 //Seems like a good max for now (in bits)
 #define MAX_ZIP_FILE_SIZE 100000
 
+//Seems like a good max for now (in bits)
+#define MAX_UNZIP_FILE_SIZE 100000
+
 //List of characters and frequencies
 struct huffman_list* encoding_list = NULL;
 
@@ -62,6 +65,12 @@ to a specified huffman tree.
 @param length Zero
 */
 void assignEncodings(struct huffman_char* hufftree, char* encoding, int length);
+
+/*
+Return the total length in bits of the file when compressed
+@return the number of bits
+*/
+int getEncodingLength();
 
 /*
 Return the string representation of a huffman tree.
