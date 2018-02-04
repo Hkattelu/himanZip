@@ -1,0 +1,3 @@
+This is an example of a text file that would be compressed with a huffman tree. The current size
+of this file is small, but after running the encoding on it, the corresponding .huff file should
+be a smaller than this for sure.
